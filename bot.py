@@ -399,15 +399,11 @@ async def emoji(ctx):
 
 
 @client.command(pass_context=True)
-async def poll(ctx, *args):
-    if ctx.message.server == None:
-        return await client.say(":x: Please specify the reason of the poll! Try this: ``!VTU poll [message]``")
-    msg = text = ' '.join(args)
+async def poll(ctx, *, message2):
     await client.delete_message(ctx.message)
-    return await client.say(text)
-    reactions = ['👍', '👎']
-    for emoji in reactions: 
-        await client.add_reaction(msg, emoji)
+    poll = await client.say("**{}**".format(message2))
+    await client.add_reaction(poll, '✅')
+    await client.add_reaction(poll, '❌')
 
 @poll.error
 async def poll_error(ctx, error):
