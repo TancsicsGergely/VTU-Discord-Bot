@@ -423,5 +423,14 @@ async def say(ctx, *args):
 async def say_error(ctx, error):
     await client.say(":x: Looks like something is not good! Try this: ``!VTU say [message]``")
 
+    
+@client.command(pass_context=True)
+async def shutdown(ctx):
+    if ctx.message.author.id == '414391316059783172' or ctx.message.author.id == '137977201344643072':
+        await client.say("I'm shutting down!")
+        await client.logout()
+    else:
+        await client.say("You can't turn off the bot!")
+    
 
 client.run(os.environ.get('TOKEN'))
