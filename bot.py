@@ -32,18 +32,62 @@ async def on_ready():
         await client.change_presence(game=discord.Game(name='Virtual Truckers Union', url="https://www.twitch.tv/wearethevr", type=1))
         await asyncio.sleep(5)
 
+
+
+#--------------------------------------------------------------------------------------------------------------------------------#
+
+@client.event
+async def on_message(message) :
+    global chat_filter
+    global bypass_list
+    await client.process_commands(message)
+    contents = message.content.split(" ")
+    for word in contents:
+        if word.upper() in chat_filter:
+            if not message.author.id in bypass_list:
+                try:
+                    await client.delete_message(message)
+                    await client.send_message(message.channel, "Hey! Please watch your language! :angry:")
+                except discord.errors.NotFound:
+                    return
+
+
+#--------------------------------------------------------------------------------------------------------------------------------#
+
+
+
+#------------Dev tools---------------#
+
 @client.command(pass_context=True)
-async def ping(ctx):
-    '''A ping command'''
-    if not ctx.message.author.bot:
-        channel = ctx.message.channel
-        t1 = time.perf_counter()
-        await client.send_typing(channel)
-        t2 = time.perf_counter()
-        embed=discord.Embed(title="Pong!", description='This message took around {}ms.'.format(round((t2-t1)*1000)), color=0xffff00)
-        await client.say(embed=embed)
+async def file(ctx):
+    await client.send_typing(ctx.message.channel)
+    await asyncio.sleep(1)
+    await client.send_file(ctx.message.channel.author, "VTUBot.py")
+
+@client.command(pass_context=True)
+async def servers(ctx):
+    msg = await client.say("Fetching info...")
+    await asyncio.sleep(0.5)
+    await client.edit_message(msg, "I'm in **{}** server(s)!".format(str(len(client.servers))))
+
+
+    
+@client.command(pass_context=True)
+async def shutdown(ctx):
+    if ctx.message.author.id == '414391316059783172' or ctx.message.author.id == '137977201344643072':
+        await client.say("I'm shutting down!")
+        await client.logout()
     else:
-        return False
+        await client.say("You can't turn off the bot!")
+    
+
+
+
+
+
+
+
+#--------------Moderating-------------#
 
 @client.command(pass_context=True)
 async def purge(ctx, amount=301):
@@ -62,6 +106,8 @@ async def purge(ctx, amount=301):
     else:
         await client.say("You need Admin perms to use this. :x:")
 
+
+
 @client.command(pass_context=True, no_pm=True)
 async def kick(ctx, user: discord.Member, * ,reason : str = None):
     '''Usage: !VTU kick [member] [reason]'''
@@ -76,6 +122,146 @@ async def kick(ctx, user: discord.Member, * ,reason : str = None):
             await client.say("You need Admin prems to use this! :x:")
     else:
         return False
+
+
+@client.command(pass_context = True)
+async def ban(ctx, member: discord.Member, days: int, *, reason : str = None):
+    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.ban:
+        if reason == "None":
+            reason = "(No reason logged!)"
+        await client.send_message(member, "You got banned from this server {} for {} days for this reason: **{}**".format(ctx.message.server.name, days ,reason)) 
+        await client.say(":white_check_mark: I banned this member! :thumbsup:")
+        await client.ban(member, days)
+    else:
+        await client.say("You need Admin perms to use this :x:")
+
+
+@client.command(pass_context = True)
+async def mute(ctx, member: discord.Member):
+    '''Usage: !VTU mute [mention] Role named "Muted" needed! '''
+    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.manageRoles or ctx.message.author.id == '416226732966936577' or ctx.message.author.id == '497797334684401664':
+        role = discord.utils.get(member.server.roles, name='Muted')
+        await client.add_roles(member, role)
+        embed=discord.Embed(title="User muted!", description="**{0}** muted by **{1}** . :white_check_mark: ".format(member.mention, ctx.message.author.mention), color=0xff00f6)
+        await client.say(embed=embed)
+    else:
+        embed=discord.Embed(title="Permission denied!", description="You don't have permission to use this command. :x:", color=0xff00f6)
+        await client.say(embed=embed)
+
+
+
+@client.command(pass_context = True)
+async def unmute(ctx, member: discord.Member):
+    '''Usage: !VTU mute [mention] Role named "Muted" needed! '''
+    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.manageRoles or ctx.message.author.id == '416226732966936577' or ctx.message.author.id == '497797334684401664':
+        role = discord.utils.get(member.server.roles, name='Muted')
+        await client.remove_roles(member, role)
+        embed=discord.Embed(title="User unmuted!", description="**{0}** unmuted by **{1}** . :white_check_mark: ".format(member.mention, ctx.message.author.mention), color=0xff00f6)
+        await client.say(embed=embed)
+    else:
+        embed=discord.Embed(title="Permission denied!", description="You don't have permission to use this command. :x:", color=0xff00f6)
+        await client.say(embed=embed)
+
+
+
+@client.command(pass_context=True)
+async def warn(ctx, member: discord.Member, *, reason : str = None):
+    if not ctx.message.author.bot or ctx.message.author.role.id == '&539595654331236353' :
+        await client.delete_message(ctx.message)
+        await client.send_message(member, "You received a warn from **{}** from this server: **{}** . Reason: **{}**".format(ctx.message.author , ctx.message.server.name , reason))
+        await client.say(":white_check_mark: I sent the warn!! :thumbsup:")
+    else:
+        return False
+
+#-------------------------------------------------------------------------------------------------------------------------------#
+
+
+
+
+
+
+#----------Others----------#
+
+@client.command(pass_context=True)
+async def poll(ctx, *, message2):
+    await client.delete_message(ctx.message)
+    poll = await client.say("**{}**".format(message2))
+    await client.add_reaction(poll, '✅')
+    await client.add_reaction(poll, '❌')
+
+@poll.error
+async def poll_error(ctx, error):
+    await client.say(":x: Looks like something is not good! Try this: ``!VTU poll [message]``")
+
+
+
+@client.command(pass_context=True)
+async def say(ctx, *args):
+    if ctx.message.server == None:
+        return await client.say(":x: Please specify the message! Try this: ``!VTU say [message]``")
+    text = ' '.join(args)
+    await client.delete_message(ctx.message)
+    return await client.say(text)
+
+@say.error
+async def say_error(ctx, error):
+    await client.say(":x: Looks like something is not good! Try this: ``!VTU say [message]``")
+
+
+
+@client.command(pass_context=True)
+async def help(ctx):
+    await client.say("I've sent you my commands in DM!")
+    await client.send_message(ctx.message.author, "This is a test!")
+
+@help.error
+async def help_error(ctx, error):
+    await client.say("Something is not good! :x:")
+
+
+
+
+#---------------Public Cmds------------#
+
+
+@client.command(aliases=['user-info', 'ui'], pass_context=True, invoke_without_command=True)
+async def info(ctx, user: discord.Member):
+    '''Usage: !VTU info [mention]'''
+    if not ctx.message.author.bot:
+        try:
+            embed = discord.Embed(title="Information from this user: {}".format(user.name), description="Details:", color=0x00ff00)
+            embed.add_field(name="Name:", value=user.name, inline=True)
+            embed.add_field(name='Nickname:', value=user.nick, inline=True)
+            embed.add_field(name="ID:", value=user.id, inline=True)
+            embed.add_field(name="Status:", value=user.status, inline=True)
+            embed.add_field(name='Game:', value=user.game, inline=True)
+            embed.add_field(name="Highest role:", value=user.top_role)
+#            embed.add_field(name="Joined at:", value=user.joined_at)
+            embed.add_field(name='Joined at:', value=user.joined_at.__format__('%A, %Y. %m. %d. @ %H:%M:%S'))
+            embed.set_author(name="User informations", icon_url=user.avatar_url)
+            embed.set_thumbnail(url=user.avatar_url)
+            embed.set_footer(text="VTU Discord Bot | v{}".format(version))
+            await client.say(embed=embed)
+        except:
+            return False
+    else:
+        return False
+
+
+
+@client.command(pass_context=True)
+async def ping(ctx):
+    '''A ping command'''
+    if not ctx.message.author.bot:
+        channel = ctx.message.channel
+        t1 = time.perf_counter()
+        await client.send_typing(channel)
+        t2 = time.perf_counter()
+        embed=discord.Embed(title="Pong!", description='This message took around {}ms.'.format(round((t2-t1)*1000)), color=0xffff00)
+        await client.say(embed=embed)
+    else:
+        return False
+
 
 @client.command(pass_context=True)
 async def serverinfo(ctx):
@@ -108,19 +294,10 @@ async def serverinfo(ctx):
     else:
         return False
 
-@client.command(pass_context=True)
-async def leave(ctx):
-    '''Bot leave the voice channel.'''
-    if not ctx.message.author.bot:
-        try:
-            server = ctx.message.server
-            voice_client = client.voice_client_in(server)
-            await voice_client.disconnect()
-            await client.say("I'm left the voice channel. :thumbsup:")
-        except:
-            await client.say("I'm not in a voice channel. :x:")
-    else:
-        return False
+
+
+#-------------Music cmds----------------#
+
 
 @client.command(aliases=['p'], pass_context=True)
 async def play(ctx, * ,url, ytdl_options=None, **kwarg):
@@ -219,6 +396,21 @@ async def stop(ctx):
     else:
         return False
 
+@client.command(pass_context=True)
+async def leave(ctx):
+    '''Bot leave the voice channel.'''
+    if not ctx.message.author.bot:
+        try:
+            server = ctx.message.server
+            voice_client = client.voice_client_in(server)
+            await voice_client.disconnect()
+            await client.say("I'm left the voice channel. :thumbsup:")
+        except:
+            await client.say("I'm not in a voice channel. :x:")
+    else:
+        return False
+
+
 @client.command(aliases=['np'], pass_context=True)
 async def now(ctx):
     if not ctx.message.author.bot:
@@ -227,111 +419,24 @@ async def now(ctx):
     else:
         return False
 
-@client.command(pass_context = True)
-async def ban(ctx, member: discord.Member, days: int, *, reason : str = None):
-    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.ban:
-        if reason == "None":
-            reason = "(No reason logged!)"
-        await client.send_message(member, "You got banned from this server {} for {} days for this reason: **{}**".format(ctx.message.server.name, days ,reason)) 
-        await client.say(":white_check_mark: I banned this member! :thumbsup:")
-        await client.ban(member, days)
-    else:
-        await client.say("You need Admin perms to use this :x:")
 
 
-#--------------------------------------------------------------------------------------------------------------------------------#
+#---------------#-ed cmds---------------#
 
-@client.event
-async def on_message(message) :
-    global chat_filter
-    global bypass_list
-    await client.process_commands(message)
-    contents = message.content.split(" ")
-    for word in contents:
-        if word.upper() in chat_filter:
-            if not message.author.id in bypass_list:
-                try:
-                    await client.delete_message(message)
-                    await client.send_message(message.channel, "Hey! Please watch your language! :angry:")
-                except discord.errors.NotFound:
-                    return
+#@client.command(pass_context=True)
+#async def sharp(ctx):
+#    user == discord.utils.find(id='137977201344643072')
+#    await client.send_message(user, "Hello Sam! :smile:\nThis is my file:")
+#    await client.send_file(user, "VTUBot.py")
 
 
 
-    if message.content.startswith('new poll'):
-        channel = message.channel
-        await client.send_message(channel, "Send me the poll's question! 👍 ")
-
-        def check(reaction, user):
-            return user == message.author and str(reaction.emoji) == '👍'
-
-        try:
-            reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
-        except asyncio.TimeoutError:
-            await client.send_message(channel, '👎')
-        else:
-            await client.send_message(channel, '👍')
-
-#--------------------------------------------------------------------------------------------------------------------------------#
-
-@client.command(pass_context = True)
-async def mute(ctx, member: discord.Member):
-    '''Usage: !VTU mute [mention] Role named "Muted" needed! '''
-    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.manageRoles or ctx.message.author.id == '416226732966936577' or ctx.message.author.id == '497797334684401664':
-        role = discord.utils.get(member.server.roles, name='Muted')
-        await client.add_roles(member, role)
-        embed=discord.Embed(title="User muted!", description="**{0}** muted by **{1}** . :white_check_mark: ".format(member.mention, ctx.message.author.mention), color=0xff00f6)
-        await client.say(embed=embed)
-    else:
-        embed=discord.Embed(title="Permission denied!", description="You don't have permission to use this command. :x:", color=0xff00f6)
-        await client.say(embed=embed)
-
-@client.command(pass_context = True)
-async def unmute(ctx, member: discord.Member):
-    '''Usage: !VTU mute [mention] Role named "Muted" needed! '''
-    if ctx.message.author.server_permissions.administrator or ctx.message.author.role.id == '&539595654331236353' or ctx.message.author.server_permissions.manageRoles or ctx.message.author.id == '416226732966936577' or ctx.message.author.id == '497797334684401664':
-        role = discord.utils.get(member.server.roles, name='Muted')
-        await client.remove_roles(member, role)
-        embed=discord.Embed(title="User unmuted!", description="**{0}** unmuted by **{1}** . :white_check_mark: ".format(member.mention, ctx.message.author.mention), color=0xff00f6)
-        await client.say(embed=embed)
-    else:
-        embed=discord.Embed(title="Permission denied!", description="You don't have permission to use this command. :x:", color=0xff00f6)
-        await client.say(embed=embed)
-
-@client.command(pass_context=True)
-async def warn(ctx, member: discord.Member, *, reason : str = None):
-    if not ctx.message.author.bot or ctx.message.author.role.id == '&539595654331236353' :
-        await client.delete_message(ctx.message)
-        await client.send_message(member, "You received a warn from **{}** from this server: **{}** . Reason: **{}**".format(ctx.message.author , ctx.message.server.name , reason))
-        await client.say(":white_check_mark: I sent the warn!! :thumbsup:")
-    else:
-        return False
-
-
-#/ Member info cmd - it can be changed /# 
-
-@client.command(aliases=['user-info', 'ui'], pass_context=True, invoke_without_command=True)
-async def info(ctx, user: discord.Member):
-    '''Usage: !VTU info [mention]'''
-    if not ctx.message.author.bot:
-        try:
-            embed = discord.Embed(title="Information from this user: {}".format(user.name), description="Details:", color=0x00ff00)
-            embed.add_field(name="Name:", value=user.name, inline=True)
-            embed.add_field(name='Nickname:', value=user.nick, inline=True)
-            embed.add_field(name="ID:", value=user.id, inline=True)
-            embed.add_field(name="Status:", value=user.status, inline=True)
-            embed.add_field(name='Game:', value=user.game, inline=True)
-            embed.add_field(name="Highest role:", value=user.top_role)
-#            embed.add_field(name="Joined at:", value=user.joined_at)
-            embed.add_field(name='Joined at:', value=user.joined_at.__format__('%A, %Y. %m. %d. @ %H:%M:%S'))
-            embed.set_author(name="User informations", icon_url=user.avatar_url)
-            embed.set_thumbnail(url=user.avatar_url)
-            embed.set_footer(text="VTU Discord Bot | v{}".format(version))
-            await client.say(embed=embed)
-        except:
-            return False
-    else:
-        return False
+#@client.command(pass_context=True)
+#async def emoji(ctx):
+#    msg = await client.say("Yey! :smile:")
+#    reactions = ['👍', '👎']
+#    for emoji in reactions: 
+#        await client.add_reaction(msg, emoji)
 
 
 #@client.command(pass_context=True)
@@ -351,86 +456,7 @@ async def info(ctx, user: discord.Member):
 #    embed.set_footer(text='Message was requested by {0}'.format(author))
 #    embed.timestamp = datetime.utcnow()
 #    await self.client.send_message(ctx.message.channel, embed=embed)
-
-
 #    embed.set_author(name="User Info", icon_url=user.avatar_url)
 
-#/ Sends the bot's file - Should be ID based /#
-
-@client.command(pass_context=True)
-async def file(ctx):
-    await client.send_typing(ctx.message.channel)
-    await asyncio.sleep(1)
-    await client.send_file(ctx.message.channel.author, "VTUBot.py")
-
-@client.command(pass_context=True)
-async def servers(ctx):
-    msg = await client.say("Fetching info...")
-    await asyncio.sleep(0.5)
-    await client.edit_message(msg, "I'm in **{}** server(s)!".format(str(len(client.servers))))
-
-
-
-
-#@client.command(pass_context=True)
-#async def sharp(ctx):
-#    user == discord.utils.find(id='137977201344643072')
-#    await client.send_message(user, "Hello Sam! :smile:\nThis is my file:")
-#    await client.send_file(user, "VTUBot.py")
-
-@client.command(pass_context=True)
-async def help(ctx):
-    await client.say("I've sent you my commands in DM!")
-    await client.send_message(ctx.message.author, "This is a test!")
-
-@help.error
-async def help_error(ctx, error):
-    await client.say("Something is not good! :x:")
-
-
-#-----------------------------------------------------Poll & echo cmd------------------------------------------------------------#
-
-@client.command(pass_context=True)
-async def emoji(ctx):
-    msg = await client.say("Yey! :smile:")
-    reactions = ['👍', '👎']
-    for emoji in reactions: 
-        await client.add_reaction(msg, emoji)
-
-
-@client.command(pass_context=True)
-async def poll(ctx, *, message2):
-    await client.delete_message(ctx.message)
-    poll = await client.say("**{}**".format(message2))
-    await client.add_reaction(poll, '✅')
-    await client.add_reaction(poll, '❌')
-
-@poll.error
-async def poll_error(ctx, error):
-    await client.say(":x: Looks like something is not good! Try this: ``!VTU poll [message]``")
-
-
-
-@client.command(pass_context=True)
-async def say(ctx, *args):
-    if ctx.message.server == None:
-        return await client.say(":x: Please specify the message! Try this: ``!VTU say [message]``")
-    text = ' '.join(args)
-    await client.delete_message(ctx.message)
-    return await client.say(text)
-
-@say.error
-async def say_error(ctx, error):
-    await client.say(":x: Looks like something is not good! Try this: ``!VTU say [message]``")
-
-    
-@client.command(pass_context=True)
-async def shutdown(ctx):
-    if ctx.message.author.id == '414391316059783172' or ctx.message.author.id == '137977201344643072':
-        await client.say("I'm shutting down!")
-        await client.logout()
-    else:
-        await client.say("You can't turn off the bot!")
-    
 
 client.run(os.environ.get('TOKEN'))
