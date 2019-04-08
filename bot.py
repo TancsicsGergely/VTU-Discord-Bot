@@ -1,9 +1,16 @@
 import aiohttp
 import discord
 import asyncio
+import random
+import logging
+import json
+from discord import Member
 from discord.ext import commands
 from discord.ext.commands import Bot
 import datetime, time
+from datetime import timedelta
+import time
+import sched
 import os
 import youtube_dl
 from discord.voice_client import VoiceClient
@@ -14,9 +21,14 @@ global chat_filter
 global bypass_list
 chat_filter = ["FUCK", "DICK", "SHIT", "FUCKING", "BITCH"]
 bypass_list = []
-client = commands.Bot(command_prefix='!VTU ')
+client = commands.Bot(command_prefix='!test ')
 Client = discord.Client()
 client.remove_command('help')
+voice_clients = {}
+version = 1.0
+
+players = {}
+queues = {}
 
 @client.event
 async def on_ready():
@@ -29,12 +41,12 @@ async def on_ready():
         await asyncio.sleep(5)
         await client.change_presence(game=discord.Game(name='VTU Discord Bot | v1.0', type=3))
         await asyncio.sleep(5)
-        await client.change_presence(game=discord.Game(name='Virtual Truckers Union', url="https://www.twitch.tv/wearethevr", type=1))
+        await client.change_presence(game=discord.Game(name='Virtual Truckers Union', url="https://www.twitch.tv/", type=1))
         await asyncio.sleep(5)
 
 
 
-#--------------------------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------------------------------------------#
 
 @client.event
 async def on_message(message) :
@@ -52,11 +64,20 @@ async def on_message(message) :
                     return
 
 
+@client.event
+async def on_member_join(member):
+    channel = discord.Object(id="564862628946640916")
+    await client.send_message(channel, "{} , welcome to the Virtual Truckers Union! Please check out <#538870097599528970> and <#538870077416800277> for more information or message a member of staff thank you.".format(member.mention))
+
+@client.event
+async def on_member_remove(member):
+    channel = discord.Object(id="564862628946640916")
+    await client.send_message(channel, "{} has left the Virtual Truckers Union, we hope to see you soon and happy trucking...".format(member.mention))
 #--------------------------------------------------------------------------------------------------------------------------------#
 
 
 
-#------------Dev tools---------------#
+#-------------------------------------------------------Dev tools----------------------------------------------------------------#
 
 @client.command(pass_context=True)
 async def file(ctx):
@@ -87,7 +108,7 @@ async def shutdown(ctx):
 
 
 
-#--------------Moderating-------------#
+#----------------------------------------------------------Moderating cmds-------------------------------------------------------#
 
 @client.command(pass_context=True)
 async def purge(ctx, amount=301):
@@ -180,14 +201,22 @@ async def warn(ctx, member: discord.Member, *, reason : str = None):
 
 
 
-#----------Others----------#
+#----------------------------------------------------------------Others----------------------------------------------------------#
 
 @client.command(pass_context=True)
 async def poll(ctx, *, message2):
+    yes = 0
+    no = 0
     await client.delete_message(ctx.message)
     poll = await client.say("**{}**".format(message2))
     await client.add_reaction(poll, '✅')
     await client.add_reaction(poll, '❌')
+    reactions = await client.wait_for_reaction(['✅'], message=poll)
+    yes = yes + 1
+    reactions2 = await client.wait_for_reaction(['❌'], message=poll)
+    no = no + 1
+    await asyncio.sleep(5)
+    await client.say("Vote closed! Results: **{}** ``yes``, **{}** ``no``".format(yes, no))
 
 @poll.error
 async def poll_error(ctx, error):
@@ -211,17 +240,22 @@ async def say_error(ctx, error):
 
 @client.command(pass_context=True)
 async def help(ctx):
+    await client.send_message(ctx.message.author, "Hello {}! These are my commands:\n\n:information_source: __**General commands**__ :information_source:\n\n*!VTU info [mention] -* **Shows informations about the mentioned user.**\n*!VTU serverinfo -* **Shows informations about the server where you used this command.**\n*!VTU ping -* **Shows you client's ping in ``ms``.**\n\n:tools: __**Moderation**__ :tools:\n\n*!VTU warn [mention] -* **Warns the mentioned user. (Requires HOO rank)**\n*!VTU mute [mention] -* **Mutes the mentioned user. (Requires administrator/manage roles permission)**\n*!VTU unmute [mention] -* **Unmutes the mentioned user. (Requires administrator/manage roles permission)**\n*!VTU kick [mention] -* **Kicks the mentioned user. (Requires administrator/kick members permission)**\n*!VTU ban [mention] -* **Bans the mentioned user. (Requires administrator/ban members permission)**\n\n:musical_note: Musical commands :musical_note:\n\n*!VTU play [link/name of the music] -* **Plays the requested song.**\n*!VTU leave -* **Leaves the voicechannel.**\n*!VTU pause -* **Pauses the played music. (The bot has to play a music to use this command)**\n*!VTU resume -* **Resumes the paused music.**\n*!VTU stop -* **After using this command you won't be able to resume the music, you'll have to use ``!VTU play`` again.**\n\n:mailbox_with_mail: Good to know :mailbox_with_mail:\n\n*Prefix:*\n**The permanent prefix is ``!VTU ``.**\n*VTU's website:*\nhttps://virtualtruckersunion.net/".format(ctx.message.author.mention))
     await client.say("I've sent you my commands in DM!")
-    await client.send_message(ctx.message.author, "This is a test!")
 
 @help.error
 async def help_error(ctx, error):
-    await client.say("Something is not good! :x:")
+    embed = discord.Embed(title=":warning: Fatal error! :warning:", description=None, color=0xffd11a)
+    embed.add_field(name="I can't send you the list of the commands!", value="**Please check that you can receive messages from anyone or that I'm not blocked for you!**", inline=True)
+    embed.add_field(name="Error at:", value="**{}**".format(error), inline=True)
+    embed.add_field(name="Help us improve user experience!", value="**Please report this problem to <@414391316059783172> to help us solve this awkvard problem.**")
+    embed.set_author(name="Unkown error", icon_url=client.user.avatar_url)
+    embed.set_footer(text="VTU Discord Bot | v{}".format(version))
+    await client.say(embed=embed)
 
 
 
-
-#---------------Public Cmds------------#
+#------------------------------------------------------------------------Public Cmds---------------------------------------------#
 
 
 @client.command(aliases=['user-info', 'ui'], pass_context=True, invoke_without_command=True)
@@ -296,7 +330,7 @@ async def serverinfo(ctx):
 
 
 
-#-------------Music cmds----------------#
+#--------------------------------------------------------------------Music cmds--------------------------------------------------#
 
 
 @client.command(aliases=['p'], pass_context=True)
@@ -419,9 +453,18 @@ async def now(ctx):
     else:
         return False
 
+#-----------------------------------------------------Minigames-------------------------------------------------------------------#
 
+@client.command(pass_context=True)
+async def dice(ctx):
+    await client.send_message(ctx.message.channel, random.choice([':game_die: Your number is **1**!',
+                                            ":game_die: Your number is **2**!",
+                                            ":game_die: Your number is **3**!",
+                                            ":game_die: Your number is **4**!",
+                                            ":game_die: Your number is **5**!",
+                                            ":game_die: Your number is **6**!"]))
 
-#---------------#-ed cmds---------------#
+#------------------------------------------------------#-ed cmds------------------------------------------------------------------#
 
 #@client.command(pass_context=True)
 #async def sharp(ctx):
