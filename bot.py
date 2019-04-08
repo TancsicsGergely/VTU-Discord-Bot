@@ -66,12 +66,12 @@ async def on_message(message) :
 
 @client.event
 async def on_member_join(member):
-    channel = discord.Object(id="564862628946640916")
+    channel = discord.Object(id="538869925738053642")
     await client.send_message(channel, "{} , welcome to the Virtual Truckers Union! Please check out <#538870097599528970> and <#538870077416800277> for more information or message a member of staff thank you.".format(member.mention))
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.Object(id="564862628946640916")
+    channel = discord.Object(id="538869925738053642")
     await client.send_message(channel, "{} has left the Virtual Truckers Union, we hope to see you soon and happy trucking...".format(member.mention))
 #--------------------------------------------------------------------------------------------------------------------------------#
 
