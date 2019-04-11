@@ -1,7 +1,7 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: Explain the but there.
+about: Create a report to help us improve the quality of VTU Discord Bot
+title: Explain the bug there.
 labels: bug
 assignees: TancsicsGergely
 
