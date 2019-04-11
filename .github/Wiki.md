@@ -18,5 +18,5 @@
 
 ## Are new to `Discord.py`?
 
-#### Then let me introduce you. ([Wikipedia](https://en.wikipedia.org/wiki/Python_%28programming_language%29))
-<p>Python is a multi-purpose programming language which can be used for discord. This part is usually called <strong>Discord.py</strong>. For <em>VTU Discord Bot</em> we are using the <em>asyncio</em> branch.</p>
+#### Then let me introduce it to you. ([Wikipedia](https://en.wikipedia.org/wiki/Python_%28programming_language%29))
+<p>Python is a multi-purpose programming language which can be used for discord. This part is usually called <strong>Discord.py</strong>. For <em>VTU Discord Bot</em> we are using the <em>asyncio</em> branch. If you want us to add your feature you **must** use this branch.</p>
