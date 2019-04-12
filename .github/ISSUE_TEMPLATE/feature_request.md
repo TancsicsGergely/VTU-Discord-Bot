@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: ''
+title: Name of the command (e.g. play)
 labels: suggestion
 assignees: TancsicsGergely
 
