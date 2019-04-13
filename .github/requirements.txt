@@ -1,0 +1,4 @@
+discord.py
+asyncio
+youtube_dl
+pynacl
