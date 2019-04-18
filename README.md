@@ -1,3 +1,11 @@
+include LICENSE
+include AUTHORS
+include MANIFEST.in
+include *.md
+include *.rst
+global-exclude *.pyc
+global-exclude __pycache__
+recursive-include tests *
 # VTU-Discord-Bot
 This is the official repo of VTU's discord bot.
 
