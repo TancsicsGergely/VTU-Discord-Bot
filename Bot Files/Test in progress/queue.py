@@ -1,3 +1,37 @@
+import discord
+import aiohttp
+import asyncio
+import random
+import logging
+import json
+import requests
+from discord import Member
+from discord.ext import commands
+from discord.ext.commands import Bot
+import datetime, time
+from datetime import timedelta
+import time
+import sched
+import os
+import youtube_dl
+from discord.voice_client import VoiceClient
+from discord_webhook import DiscordWebhook, DiscordEmbed
+from emojis import emojis
+from pyson import pyson
+global playing
+playing = "No music playing right now :("
+players = {}
+client = commands.Bot(command_prefix='!VTU ')
+Client = discord.Client()
+client.remove_command('help')
+voice_clients = {}
+version = 1.0
+
+players = {}
+queues = {}
+
+
+
 songs = asyncio.Queue()
 play_next_song = asyncio.Event()
 
@@ -74,3 +108,8 @@ async def testplay(ctx, * ,url, ytdl_options=None, **kwarg):
                 await client.say("Something is not good! Use ``!VTU leave``!")
         else:
             return False
+
+        
+
+client.loop.create_task(audio_player_task())
+client.run("TOKEN")
